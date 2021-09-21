@@ -1,9 +1,66 @@
 
+export type CoapMethod = "GET" | "POST" | "PUT" | "DELETE" | "FETCH" | "PATCH" | "iPATCH";
+
+export interface Option {
+  name: number | string;
+  value: Buffer;
+}
+
+export type OptionName =
+  | "If-Match"
+  | "Uri-Host"
+  | "ETag"
+  | "If-None-Match"
+  | "Observe"
+  | "Uri-Port"
+  | "Location-Path"
+  | "Uri-Path"
+  | "Content-Format"
+  | "Max-Age"
+  | "Uri-Query"
+  | "Accept"
+  | "Location-Query"
+  | "Block2"
+  | "Block1"
+  | "Proxy-Uri"
+  | "Proxy-Scheme"
+  | "Size1";
+
+
+export interface NamedOption {
+  name: OptionName;
+  value: Buffer;
+}
+
+export interface Packet {
+  token?: Buffer;
+  code?: CoapMethod | string;
+  messageId?: number;
+  payload?: Buffer;
+  options?: (Option | NamedOption)[];
+  confirmable?: boolean;
+  reset?: boolean;
+  ack?: boolean;
+}
+
+export interface ParsedPacket {
+  code: string;
+  confirmable: boolean;
+  reset: boolean;
+  ack: boolean;
+  messageId: number;
+  token: Buffer;
+  options: (Option | NamedOption)[];
+  payload: Buffer;
+}
+
+
+
 const empty = Buffer.alloc(0)
 
 // a global index for parsing the options and the payload
 // we can do this as the parsing is a sync operation
-let index
+let index: number;
 
 // last five bits are 1
 // 31.toString(2) => '111111'
@@ -11,24 +68,24 @@ const lowerCodeMask = 31
 
 let nextMsgId = Math.floor(Math.random() * 65535)
 
-const codes = {
-  GET: 1,
-  POST: 2,
-  PUT: 3,
-  DELETE: 4,
-  FETCH: 5,
-  PATCH: 6,
-  iPATCH: 7,
-  get: 1,
-  post: 2,
-  put: 3,
-  delete: 4,
-  fetch: 5,
-  patch: 6,
-  ipatch: 7
+const codes: { [key: string]: number } = {
+  'GET': 1,
+  'POST': 2,
+  'PUT': 3,
+  'DELETE': 4,
+  'FETCH': 5,
+  'PATCH': 6,
+  'iPATCH': 7,
+  'get': 1,
+  'post': 2,
+  'put': 3,
+  'delete': 4,
+  'fetch': 5,
+  'patch': 6,
+  'ipatch': 7
 }
 
-module.exports.generate = function generate (packet) {
+export function generate(packet?: Packet): Buffer {
   let pos = 0
 
   packet = fillGenDefaults(packet)
@@ -78,11 +135,11 @@ module.exports.generate = function generate (packet) {
   return buffer
 }
 
-module.exports.parse = function parse (buffer) {
+export function parse(buffer: Buffer): ParsedPacket {
   index = 4
   parseVersion(buffer)
 
-  const result = {
+  const result : ParsedPacket= {
     code: parseCode(buffer),
     confirmable: parseConfirmable(buffer),
     reset: parseReset(buffer),
@@ -108,7 +165,7 @@ module.exports.parse = function parse (buffer) {
   return result
 }
 
-function parseVersion (buffer) {
+function parseVersion(buffer: Buffer): number {
   const version = buffer.readUInt8(0) >> 6
 
   if (version !== 1) {
@@ -118,21 +175,21 @@ function parseVersion (buffer) {
   return version
 }
 
-function parseConfirmable (buffer) {
+function parseConfirmable(buffer: Buffer): boolean {
   return (buffer.readUInt8(0) & 48) === 0
 }
 
-function parseReset (buffer) {
+function parseReset(buffer: Buffer): boolean {
   // 110000 is 48
   return (buffer.readUInt8(0) & 48) === 48
 }
 
-function parseAck (buffer) {
+function parseAck(buffer: Buffer): boolean {
   // 100000 is 32
   return (buffer.readUInt8(0) & 48) === 32
 }
 
-function parseCode (buffer) {
+function parseCode(buffer: Buffer): string {
   let byte = buffer.readUInt8(1)
   let code = '' + (byte >> 5) + '.'
 
@@ -147,7 +204,7 @@ function parseCode (buffer) {
   return code
 }
 
-function parseToken (buffer) {
+function parseToken(buffer: Buffer): Buffer {
   const length = buffer.readUInt8(0) & 15
 
   if (length > 8) {
@@ -161,28 +218,28 @@ function parseToken (buffer) {
   return result
 }
 
-const numMap = {
-  1: 'If-Match',
-  3: 'Uri-Host',
-  4: 'ETag',
-  5: 'If-None-Match',
-  6: 'Observe',
-  7: 'Uri-Port',
-  8: 'Location-Path',
-  11: 'Uri-Path',
-  12: 'Content-Format',
-  14: 'Max-Age',
-  15: 'Uri-Query',
-  17: 'Accept',
-  20: 'Location-Query',
-  23: 'Block2',
-  27: 'Block1',
-  35: 'Proxy-Uri',
-  39: 'Proxy-Scheme',
-  60: 'Size1'
+const numMap: { [id: string]: string } = {
+  '1': 'If-Match',
+  '3': 'Uri-Host',
+  '4': 'ETag',
+  '5': 'If-None-Match',
+  '6': 'Observe',
+  '7': 'Uri-Port',
+  '8': 'Location-Path',
+  '11': 'Uri-Path',
+  '12': 'Content-Format',
+  '14': 'Max-Age',
+  '15': 'Uri-Query',
+  '17': 'Accept',
+  '20': 'Location-Query',
+  '23': 'Block2',
+  '27': 'Block1',
+  '35': 'Proxy-Uri',
+  '39': 'Proxy-Scheme',
+  '60': 'Size1'
 }
 
-const optionNumberToString = (function genOptionParser () {
+const optionNumberToString = (function genOptionParser() {
   let code = Object.keys(numMap).reduce(function (acc, key) {
     acc += 'case ' + key + ':\n'
     acc += '  return \'' + numMap[key] + '\'\n'
@@ -197,9 +254,9 @@ const optionNumberToString = (function genOptionParser () {
   return new Function('number', code) /* eslint-disable-line no-new-func */
 })()
 
-function parseOptions (buffer) {
-  let number = 0
-  const options = []
+function parseOptions(buffer: Buffer): Option[] {
+  let number = 0;
+  const options: Option[] = [];
 
   while (index < buffer.length) {
     const byte = buffer.readUInt8(index)
@@ -246,7 +303,7 @@ function parseOptions (buffer) {
   return options
 }
 
-function toCode (code) {
+function toCode(code: string): number {
   const split = code.split && code.split('.')
   let by = 0
 
@@ -254,18 +311,16 @@ function toCode (code) {
     by |= parseInt(split[0]) << 5
     by |= parseInt(split[1])
   } else {
-    if (!split) {
-      code = parseInt(code)
-    }
+    let numeric_code = (!split) ? parseInt(code) : Number(code);
 
-    by |= (code / 100) << 5
-    by |= (code % 100)
+    by |= (numeric_code / 100) << 5
+    by |= (numeric_code % 100)
   }
 
   return by
 }
 
-function fillGenDefaults (packet) {
+function fillGenDefaults(packet?: Packet): Packet {
   if (!packet) {
     packet = {}
   }
@@ -313,8 +368,8 @@ function fillGenDefaults (packet) {
   return packet
 }
 
-function confirmableAckResetMask (packet) {
-  let result
+function confirmableAckResetMask(packet: Packet): number {
+  let result: number;
 
   if (packet.confirmable) {
     result = 0 << 4
@@ -329,7 +384,7 @@ function confirmableAckResetMask (packet) {
   return result
 }
 
-function calculateLength (packet, options) {
+function calculateLength(packet: Packet, options: Buffer[]) {
   let length = 4 + packet.payload.length + packet.token.length
 
   if (packet.code !== '0.00' && packet.payload.toString() !== '') {
@@ -343,8 +398,8 @@ function calculateLength (packet, options) {
   return length
 }
 
-const optionStringToNumber = (function genOptionParser () {
-  let code = Object.keys(numMap).reduce(function (acc, key) {
+const optionStringToNumber = (function genOptionParser() {
+  let code = Object.keys(numMap).reduce((acc, key) => {
     acc += 'case \'' + numMap[key] + '\':\n'
     acc += '  return \'' + key + '\'\n'
 
@@ -358,51 +413,44 @@ const optionStringToNumber = (function genOptionParser () {
   return new Function('string', code) /* eslint-disable-line no-new-func */
 })()
 
-const nameMap = Object.keys(numMap).reduce(function (acc, key) {
+const nameMap = Object.keys(numMap).reduce((acc, key) => {
   acc[numMap[key]] = key
   return acc
-}, {})
+}, {} as { [id: string]: string })
 
-function optionSorter (a, b) {
-  a = a.name
-  b = b.name
+function optionSorter(a: (Option | NamedOption), b: (Option | NamedOption)) {
+  let a_name = a.name;
+  let b_name = b.name;
 
-  a = parseInt(nameMap[a] || a)
-  b = parseInt(nameMap[b] || b)
+  let a_value = parseInt(nameMap[String(a_name)] || String(a_name))
+  let b_value = parseInt(nameMap[String(b_name)] || String(b_name))
 
-  if (a < b) {
+  if (a_value < b_value) {
     return -1
   }
-  if (a > b) {
+  if (a_value > b_value) {
     return 1
   }
 
   return 0
 }
 
-function prepareOptions (packet) {
-  const options = []
+function prepareOptions(packet: Packet): Buffer[] {
+  const options: Buffer[] = []
   let total = 0
-  let delta
-  let buffer
-  let byte
-  let option
-  let i
-  let pos
-  let value
 
   packet.options.sort(optionSorter)
 
-  for (i = 0; i < packet.options.length; i++) {
-    pos = 0
-    option = packet.options[i].name
-    delta = optionStringToNumber(option) - total
-    value = packet.options[i].value
+  for (let i = 0; i < packet.options.length; i++) {
+    let pos = 0
+    let option = packet.options[i].name
+    let delta = optionStringToNumber(option) - total
+    let value = packet.options[i].value
 
     // max option length is 1 header, 2 ext numb, 2 ext length
-    buffer = Buffer.alloc(value.length + 5)
+    let buffer = Buffer.alloc(value.length + 5)
 
-    byte = 0
+    let byte = 0
 
     if (delta <= 12) {
       byte |= delta << 4

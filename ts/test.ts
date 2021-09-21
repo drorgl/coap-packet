@@ -1,4 +1,4 @@
-import { Packet, NamedOption, parse as parseCoap, generate as encodeCoap } from "../index";
+import { Packet, NamedOption, parse as parseCoap, generate as encodeCoap } from "../src/index";
 
 const packet: Packet = {
     code: "POST",
