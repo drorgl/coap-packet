@@ -5,7 +5,7 @@
         "radix": false,
         "object-literal-sort-keys": false,
         "trailing-comma":[false],
-        "indent": [true,"tabs"],
+        "indent": [true,"spaces"],
         "max-line-length": [false],
         "no-string-literal": false,
         "class-name": false,

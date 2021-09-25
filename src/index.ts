@@ -105,7 +105,7 @@ export function generate(packet?: Packet): Buffer {
   byte |= packet.token.length
   buffer.writeUInt8(byte, pos++)
 
-  // code can be humized or not
+  // code can be humanized or not
   if (codes[packet.code]) {
     buffer.writeUInt8(codes[packet.code], pos++)
   } else {
@@ -121,9 +121,9 @@ export function generate(packet?: Packet): Buffer {
   pos += packet.token.length
 
   // write the options
-  for (let i = 0; i < options.length; i++) {
-    options[i].copy(buffer, pos)
-    pos += options[i].length
+  for (const option of options){
+    option.copy(buffer, pos)
+    pos += option.length
   }
 
   if (packet.code !== '0.00' && packet.payload.toString() !== '') {
@@ -139,7 +139,7 @@ export function parse(buffer: Buffer): ParsedPacket {
   index = 4
   parseVersion(buffer)
 
-  const result : ParsedPacket= {
+  const result: ParsedPacket = {
     code: parseCode(buffer),
     confirmable: parseConfirmable(buffer),
     reset: parseReset(buffer),
@@ -240,7 +240,7 @@ const numMap: { [id: string]: string } = {
 }
 
 const optionNumberToString = (function genOptionParser() {
-  let code = Object.keys(numMap).reduce(function (acc, key) {
+  let code = Object.keys(numMap).reduce((acc, key) =>{
     acc += 'case ' + key + ':\n'
     acc += '  return \'' + numMap[key] + '\'\n'
 
@@ -311,7 +311,7 @@ function toCode(code: string): number {
     by |= parseInt(split[0]) << 5
     by |= parseInt(split[1])
   } else {
-    let numeric_code = (!split) ? parseInt(code) : Number(code);
+    const numeric_code = (!split) ? parseInt(code) : Number(code);
 
     by |= (numeric_code / 100) << 5
     by |= (numeric_code % 100)
@@ -391,8 +391,8 @@ function calculateLength(packet: Packet, options: Buffer[]) {
     length += 1
   }
 
-  for (let i = 0; i < options.length; i++) {
-    length += options[i].length
+  for (const option of options){
+    length += option.length
   }
 
   return length
@@ -419,11 +419,11 @@ const nameMap = Object.keys(numMap).reduce((acc, key) => {
 }, {} as { [id: string]: string })
 
 function optionSorter(a: (Option | NamedOption), b: (Option | NamedOption)) {
-  let a_name = a.name;
-  let b_name = b.name;
+  const a_name = a.name;
+  const b_name = b.name;
 
-  let a_value = parseInt(nameMap[String(a_name)] || String(a_name))
-  let b_value = parseInt(nameMap[String(b_name)] || String(b_name))
+  const a_value = parseInt(nameMap[String(a_name)] || String(a_name))
+  const b_value = parseInt(nameMap[String(b_name)] || String(b_name))
 
   if (a_value < b_value) {
     return -1
@@ -441,14 +441,14 @@ function prepareOptions(packet: Packet): Buffer[] {
 
   packet.options.sort(optionSorter)
 
-  for (let i = 0; i < packet.options.length; i++) {
+  for (const packetOption of packet.options){
     let pos = 0
-    let option = packet.options[i].name
-    let delta = optionStringToNumber(option) - total
-    let value = packet.options[i].value
+    const option = packetOption.name
+    const delta = optionStringToNumber(option) - total
+    const value = packetOption.value
 
     // max option length is 1 header, 2 ext numb, 2 ext length
-    let buffer = Buffer.alloc(value.length + 5)
+    const buffer = Buffer.alloc(value.length + 5)
 
     let byte = 0
 
