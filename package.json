@@ -8,8 +8,8 @@
     "coverage1": "nyc report --reporter=lcov --reporter=text-summary",
     "test-build": "tsc -noEmit",
     "test": "mocha -R spec --full-trace -r ts-node/register test/*.ts",
-    "build": "tsc",
-    "pre-commit": "npm run test-build && npm run test",
+    "build": "rimraf ./dist && tsc",
+    "pre-commit": "rimraf ./dist && npm run test-build && npm run test",
     "coverage": "rimraf ./coverage && nyc mocha -r ts-node/register -r source-map-support/register --ui bdd test/**/*.ts"
   },
   "repository": {

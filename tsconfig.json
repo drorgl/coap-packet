@@ -7,7 +7,7 @@
       "moduleResolution": "node",
       "module": "commonjs", 
       "removeComments": false,
-      "sourceMap": true,
+      "sourceMap": false,
       "esModuleInterop": true,
       "allowSyntheticDefaultImports":true,
       "emitDecoratorMetadata": true,
@@ -15,6 +15,7 @@
       "noImplicitAny": true,
       "declaration": true,
       "target":"es2017",
+      "rootDir": "src",
       "lib": [
           "es2017",
           "dom"
@@ -28,7 +29,6 @@
       ]
   },
   "include": [
-      "src/**/*",
-      "test/**/*"
+      "./src/**/*.ts"
   ]
 }

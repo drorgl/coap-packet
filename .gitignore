@@ -19,3 +19,5 @@ docs
 coverage
 .nyc_output
 coap-packet-*.tgz
+
+/dist
