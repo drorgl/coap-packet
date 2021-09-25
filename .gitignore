@@ -18,3 +18,4 @@ docs
 .DS_Store
 coverage
 .nyc_output
+coap-packet-*.tgz

@@ -1,1 +1,12 @@
 *~
+.github/
+.nyc_output/
+.nycrc
+.vscode/
+coverage.lcov
+coverage/
+src/
+ts/
+test/
+tslint.json
+coap-packet-*.tgz
